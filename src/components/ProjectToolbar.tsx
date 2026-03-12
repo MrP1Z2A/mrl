@@ -26,7 +26,7 @@ export const ProjectToolbar: React.FC = () => {
       </select>
 
       <div className="xl:col-span-2 flex items-center justify-end gap-4 text-slate-600">
-        <span className="text-sm">6,030 projects</span>
+        <span className="text-sm">projects</span>
         <button className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors">
           <ArrowUpDown size={16} />
           <span className="text-sm font-medium">Trending</span>
