@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { PROJECT_CATEGORIES } from '../categories';
 
 interface ProjectFormProps {
   onClose: () => void;
@@ -79,10 +80,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
                 value={formData.category}
                 onChange={e => setFormData({...formData, category: e.target.value})}
               >
-                <option>Robotics</option>
-                <option>Mechanical</option>
-                <option>Energy</option>
-                <option>IoT</option>
+                {PROJECT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-2">
