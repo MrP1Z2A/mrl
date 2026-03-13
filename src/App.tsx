@@ -42,13 +42,13 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav className="sticky top-0 z-40 bg-[#f3f4f6] border-b border-[#8f9fe8]">
+      <nav className="sticky top-0 z-40 bg-white">
         <div className="w-full h-28 px-4 md:px-6 lg:px-8 grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div 
             className="flex items-center gap-2 md:gap-3 cursor-pointer"
             onClick={() => setSelectedProject(null)}
           >
-            <img src={logo} alt="Myanmar Robotics Lab logo" className="h-24 w-24 rounded-md object-cover ring-2 ring-[#8f9fe8]/30" />
+            <img src={logo} alt="Myanmar Robotics Lab logo" className="h-24 w-24 rounded-md object-cover" />
             <div className="mrl-brand leading-none">
               <div className="mrl-brand-top">MRL</div>
               <div className="mrl-brand-bottom">Project Hub</div>
