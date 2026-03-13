@@ -16,6 +16,11 @@ import {
 } from 'lucide-react';
 import { CATEGORY_STRIP_ITEMS } from '../categories';
 
+interface CategoryStripProps {
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
+}
+
 const iconByLabel = {
   'All categories': Grid2x2,
   'Audio and sound': Volume2,
@@ -32,16 +37,18 @@ const iconByLabel = {
   Wearables: Watch,
 } as const;
 
-export const CategoryStrip: React.FC = () => {
+export const CategoryStrip: React.FC<CategoryStripProps> = ({ selectedCategory, onSelectCategory }) => {
   return (
     <section className="mb-4 border-y border-slate-200 bg-white/80 px-2 py-3 overflow-x-auto">
       <div className="flex items-start gap-4 min-w-max">
         {CATEGORY_STRIP_ITEMS.map((label) => {
           const Icon = iconByLabel[label];
-          const active = label === 'All categories';
+          const active = label === selectedCategory;
           return (
             <button
+              type="button"
               key={label}
+              onClick={() => onSelectCategory(label)}
               className={`flex w-[108px] flex-col items-center gap-2 pb-3 text-center transition-colors ${
                 active
                   ? 'border-b-2 border-[#0f8b95] text-[#0f8b95]'

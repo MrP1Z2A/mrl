@@ -31,23 +31,54 @@
 
 @layer components {
   .mrl-brand {
-    font-family: "Bahnschrift", "Century Gothic", "Trebuchet MS", "Segoe UI", sans-serif;
-    letter-spacing: 0.09em;
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
   }
 
   .mrl-brand-top {
-    font-size: 1.95rem;
-    line-height: 1;
-    font-weight: 700;
-    color: #0f7287;
+    font-size: clamp(1.65rem, 2vw, 2rem);
+    line-height: 1.05;
+    font-weight: 800;
+    color: #78c5ef;
   }
 
   .mrl-brand-bottom {
-    font-size: 1.55rem;
+    font-size: clamp(0.95rem, 1.4vw, 1.35rem);
+    line-height: 1.05;
+    font-weight: 300;
+    color: #78c5ef;
+  }
+
+  .mrl-nav-item {
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-size: clamp(1rem, 1.15vw, 1.2rem);
     line-height: 1;
-    font-weight: 500;
-    color: #0f2230;
+    font-weight: 600;
+    color: #5c5c5b;
+    transition: color 160ms ease;
+  }
+
+  .mrl-cta {
+    font-family: "Montserrat", "Segoe UI", sans-serif;
+    font-size: clamp(1rem, 1.1vw, 1.25rem);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: #fff;
+    background-color: #78c5ef;
+    border-radius: 9999px;
+    padding: 0.65rem 1.35rem;
+    box-shadow: 0 10px 22px rgba(120, 197, 239, 0.35);
+    transition: background-color 160ms ease;
+  }
+
+  .mrl-cta:hover {
+    background-color: #63b7e6;
+  }
+
+  .mrl-nav-item:hover {
+    color: #3f3f3f;
   }
 }
 

@@ -6,7 +6,7 @@ import { ProjectForm } from './components/ProjectForm';
 import { HeroShowcase } from './components/HeroShowcase';
 import { CategoryStrip } from './components/CategoryStrip';
 import { ProjectToolbar } from './components/ProjectToolbar';
-import { Plus, Search, Github, Cloud, User } from 'lucide-react';
+import { Search, Github, Cloud, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import logo from '../pics/pic.jpg';
 
@@ -15,6 +15,7 @@ export default function App() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('All categories');
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -33,48 +34,52 @@ export default function App() {
     fetchProjects();
   }, []);
 
+  const filteredProjects =
+    selectedCategory === 'All categories'
+      ? projects
+      : projects.filter((project) => project.category === selectedCategory);
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
-      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="w-full pl-2 pr-4 h-20 flex items-center justify-between gap-3">
+      <nav className="sticky top-0 z-40 bg-[#f3f4f6] border-b border-[#8f9fe8]">
+        <div className="w-full h-28 px-4 md:px-6 lg:px-8 grid grid-cols-[auto_1fr_auto] items-center gap-4">
           <div 
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-2 md:gap-3 cursor-pointer"
             onClick={() => setSelectedProject(null)}
           >
-            <img src={logo} alt="Myanmar Robotics Lab logo" className="h-20 w-20 rounded-md object-cover ring-2 ring-[#6CBAE6]/30" />
+            <img src={logo} alt="Myanmar Robotics Lab logo" className="h-24 w-24 rounded-md object-cover ring-2 ring-[#8f9fe8]/30" />
             <div className="mrl-brand leading-none">
-              <div className="mrl-brand-top">Myanmar</div>
-              <div className="mrl-brand-bottom">Robotics Lab</div>
+              <div className="mrl-brand-top">MRL</div>
+              <div className="mrl-brand-bottom">Project Hub</div>
             </div>
           </div>
 
-          <div className="hidden lg:flex items-center gap-8">
-            <button className="text-sm font-bold text-[#0f8b95] hover:text-[#0e737b] transition-colors">Projects</button>
-            <button className="text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors">Featured</button>
-            <button className="text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors">Pro</button>
-            <button className="text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors">For School</button>
-            <button className="text-sm font-bold text-slate-700 hover:text-slate-900 transition-colors">FAQ</button>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button className="hidden md:inline-flex text-slate-600 hover:text-slate-900 transition-colors" aria-label="Search">
-              <Search size={20} />
-            </button>
-            <button className="hidden md:inline-flex items-center gap-1 text-slate-700 hover:text-slate-900 transition-colors">
-              <Cloud size={18} />
-              <span className="text-sm font-semibold">Cloud</span>
-            </button>
-            <button className="hidden md:inline-flex items-center gap-1 text-slate-700 hover:text-slate-900 transition-colors">
-              <User size={18} />
-              <span className="text-sm font-semibold">Login</span>
-            </button>
+          <div className="hidden lg:flex items-center justify-center gap-12">
+            <button className="mrl-nav-item">Home</button>
+            <button className="mrl-nav-item">Projects</button>
+            <button className="mrl-nav-item">FAQ</button>
             <button 
               onClick={() => setIsFormOpen(true)}
-              className="flex items-center gap-2 bg-[#0f8b95] text-white px-4 py-2 rounded-full text-sm font-bold hover:bg-[#0e737b] transition-all shadow-lg shadow-[#0f8b95]/20"
+              className="mrl-cta"
             >
-              <Plus size={18} />
-              <span>New Project</span>
+              + New Project
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3 md:gap-4 justify-self-end">
+            <button className="hidden md:inline-flex text-[#5c5c5b] hover:text-slate-900 transition-colors" aria-label="Search">
+              <Search size={20} />
+            </button>
+            <span className="hidden md:inline-block h-8 border-l border-[#5c5c5b]/40" aria-hidden="true" />
+            <button className="hidden md:inline-flex items-center gap-1 text-[#5c5c5b] hover:text-slate-900 transition-colors">
+              <Cloud size={20} />
+              <span className="mrl-nav-item">Cloud</span>
+            </button>
+            <span className="hidden md:inline-block h-8 border-l border-[#5c5c5b]/40" aria-hidden="true" />
+            <button className="hidden md:inline-flex items-center gap-1 text-[#5c5c5b] hover:text-slate-900 transition-colors">
+              <User size={20} />
+              <span className="mrl-nav-item">Login</span>
             </button>
           </div>
         </div>
@@ -103,7 +108,10 @@ export default function App() {
               className="max-w-7xl mx-auto px-4 py-12"
             >
               <HeroShowcase />
-              <CategoryStrip />
+              <CategoryStrip
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
               <ProjectToolbar />
 
               {/* Project Grid */}
@@ -115,7 +123,7 @@ export default function App() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {projects.map(project => (
+                  {filteredProjects.map(project => (
                     <ProjectCard 
                       key={project.id} 
                       project={project} 
@@ -125,9 +133,9 @@ export default function App() {
                 </div>
               )}
 
-              {!loading && projects.length === 0 && (
+              {!loading && filteredProjects.length === 0 && (
                 <div className="text-center py-24">
-                  <p className="text-slate-400 font-medium">No projects available yet.</p>
+                  <p className="text-slate-400 font-medium">No projects found in this category.</p>
                 </div>
               )}
             </motion.div>
