@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Plus, Trash2, Upload, Image as ImageIcon, FileUp, Loader2 } from 'lucide-react';
 import { PROJECT_CATEGORIES } from '../categories';
+import { supabase } from '../lib/supabase';
 
 interface ProjectFormProps {
   onClose: () => void;
@@ -9,6 +10,9 @@ interface ProjectFormProps {
 
 export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const inlineFileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -16,23 +20,81 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
     category: 'Robotics',
     difficulty: 'Intermediate',
     image_url: '',
-    content: ''
+    content: '',
+    components: '', 
+    code_snippet: '',
+    schematic_url: ''
   });
+
+  const uploadFile = async (file: File) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from('project-assets')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-assets')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error: any) {
+      alert('Error uploading file: ' + error.message);
+      return null;
+    }
+  };
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploading(true);
+    const url = await uploadFile(e.target.files[0]);
+    if (url) {
+      setFormData({ ...formData, image_url: url });
+    }
+    setUploading(false);
+  };
+
+  const handleInlineUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setUploading(true);
+    const url = await uploadFile(e.target.files[0]);
+    if (url) {
+      const markdownImage = `\n![Image](${url})\n`;
+      setFormData({ ...formData, content: formData.content + markdownImage });
+    }
+    setUploading(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
-        onSuccess();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        alert('Please login to post a project');
+        return;
       }
-    } catch (err) {
-      console.error(err);
+
+      const { error } = await supabase
+        .from('projects')
+        .insert([{
+          ...formData,
+          user_id: user.id,
+          components: formData.components.split(',').map(s => s.trim()).filter(s => s !== ''),
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+      onSuccess();
+    } catch (err: any) {
+      console.error('Error saving project:', err);
+      alert('Failed to save project: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -99,15 +161,45 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Cover Image URL</label>
-            <input 
-              required
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none"
-              placeholder="https://images.unsplash.com/..."
-              value={formData.image_url}
-              onChange={e => setFormData({...formData, image_url: e.target.value})}
-            />
+          <div className="space-y-4">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Cover Image</label>
+            <div className="flex gap-4 items-start">
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-1 h-32 border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-[#6CBAE6] hover:bg-slate-50 transition-all group relative overflow-hidden"
+              >
+                {formData.image_url ? (
+                  <>
+                    <img src={formData.image_url} alt="Cover preview" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Upload className="text-white" size={24} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {uploading ? <Loader2 className="animate-spin text-slate-300" size={24} /> : <Upload className="text-slate-300 group-hover:text-[#6CBAE6]" size={24} />}
+                    <span className="text-xs text-slate-400 mt-2">Upload Image</span>
+                  </>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleCoverUpload}
+                  disabled={uploading}
+                />
+              </div>
+              <div className="flex-1 space-y-2">
+                <label className="text-[10px] font-bold text-slate-400">OR PASTE URL</label>
+                <input 
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none text-sm"
+                  placeholder="https://images.unsplash.com/..."
+                  value={formData.image_url}
+                  onChange={e => setFormData({...formData, image_url: e.target.value})}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -123,12 +215,62 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Project Content (Markdown)</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Components Used</label>
+            <input 
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none"
+              placeholder="Arduino Uno, SG90 Servo, Ultrasonic Sensor (comma separated)"
+              value={formData.components}
+              onChange={e => setFormData({...formData, components: e.target.value})}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Schematic Link (Optional)</label>
+              <input 
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none"
+                placeholder="Link to Wokwi/Circuits.io"
+                value={formData.schematic_url}
+                onChange={e => setFormData({...formData, schematic_url: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Code Snippet (Optional)</label>
+              <textarea 
+                rows={1}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 font-mono text-sm focus:border-[#6CBAE6] outline-none resize-none"
+                placeholder="void setup() { ... }"
+                value={formData.code_snippet}
+                onChange={e => setFormData({...formData, code_snippet: e.target.value})}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Project Documentation (Markdown)</label>
+              <button
+                type="button"
+                onClick={() => inlineFileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-1.5 text-xs font-bold text-[#6CBAE6] hover:text-[#5BA9D6] transition-colors"
+              >
+                {uploading ? <Loader2 className="animate-spin" size={14} /> : <ImageIcon size={14} />}
+                Add Image
+              </button>
+              <input 
+                type="file" 
+                ref={inlineFileInputRef} 
+                className="hidden" 
+                accept="image/*" 
+                onChange={handleInlineUpload}
+              />
+            </div>
             <textarea 
               required
               rows={8}
               className="w-full px-4 py-3 rounded-xl border border-slate-200 font-mono text-sm focus:border-[#6CBAE6] outline-none"
-              placeholder="# Introduction\nDetails about your build..."
+              placeholder="# Step 1: Assembly\nPlace the wheels..."
               value={formData.content}
               onChange={e => setFormData({...formData, content: e.target.value})}
             />

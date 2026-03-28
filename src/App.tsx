@@ -6,25 +6,34 @@ import { ProjectForm } from './components/ProjectForm';
 import { HeroShowcase } from './components/HeroShowcase';
 import { CategoryStrip } from './components/CategoryStrip';
 import { ProjectToolbar } from './components/ProjectToolbar';
-import { Search, Github, Cloud, User } from 'lucide-react';
+import { AuthModal } from './components/AuthModal';
+import { supabase } from './lib/supabase';
+import { Search, Github, Cloud, User as UserIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { User } from '@supabase/supabase-js';
 import logo from '../pics/pic.jpg';
 
 export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All categories');
+  const [user, setUser] = useState<User | null>(null);
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/projects');
-      const data = await res.json();
-      setProjects(data);
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProjects(data || []);
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching projects:', err);
     } finally {
       setLoading(false);
     }
@@ -32,6 +41,18 @@ export default function App() {
 
   useEffect(() => {
     fetchProjects();
+
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const filteredProjects =
@@ -60,7 +81,13 @@ export default function App() {
             <button className="mrl-nav-item">Projects</button>
             <button className="mrl-nav-item">FAQ</button>
             <button 
-              onClick={() => setIsFormOpen(true)}
+              onClick={() => {
+                if (user) {
+                  setIsFormOpen(true);
+                } else {
+                  setIsAuthOpen(true);
+                }
+              }}
               className="mrl-cta"
             >
               + New Project
@@ -77,10 +104,35 @@ export default function App() {
               <span className="mrl-nav-item">Cloud</span>
             </button>
             <span className="hidden md:inline-block h-8 border-l border-[#5c5c5b]/40" aria-hidden="true" />
-            <button className="hidden md:inline-flex items-center gap-1 text-[#5c5c5b] hover:text-slate-900 transition-colors">
-              <User size={20} />
-              <span className="mrl-nav-item">Login</span>
-            </button>
+            
+            {user ? (
+              <div className="flex items-center gap-4 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">MEMBER</span>
+                  <span className="text-sm font-black text-slate-900 leading-tight">
+                    {user.email?.split('@')[0]}
+                  </span>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#6CBAE6] to-[#5c98ff] flex items-center justify-center text-white font-bold text-xs ring-2 ring-white shadow-md">
+                  {user.email?.[0].toUpperCase()}
+                </div>
+                <button 
+                  onClick={() => supabase.auth.signOut()}
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Sign Out"
+                >
+                  <LogOut size={18} />
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setIsAuthOpen(true)}
+                className="hidden md:inline-flex items-center gap-1 text-[#5c5c5b] hover:text-slate-900 transition-colors"
+              >
+                <UserIcon size={20} />
+                <span className="mrl-nav-item">Login</span>
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -204,6 +256,15 @@ export default function App() {
               }}
             />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAuthOpen && (
+          <AuthModal 
+            isOpen={isAuthOpen} 
+            onClose={() => setIsAuthOpen(false)} 
+          />
         )}
       </AnimatePresence>
     </div>

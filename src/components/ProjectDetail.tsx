@@ -1,7 +1,7 @@
 import React from 'react';
 import { Project } from '../utils';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, User, Calendar, BarChart } from 'lucide-react';
+import { ArrowLeft, User, Calendar, BarChart, Cpu, Code, ExternalLink, Box } from 'lucide-react';
 
 interface ProjectDetailProps {
   project: Project;
@@ -56,8 +56,67 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
         />
       </div>
 
-      <div className="prose prose-slate max-w-none">
-        <ReactMarkdown>{project.content}</ReactMarkdown>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="lg:col-span-2">
+          <div className="prose prose-slate max-w-none mb-12">
+            <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Box className="text-[#6CBAE6]" size={24} />
+              Project Story
+            </h3>
+            <ReactMarkdown>{project.content}</ReactMarkdown>
+          </div>
+
+          {project.code_snippet && (
+            <div className="mb-12">
+              <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Code className="text-[#6CBAE6]" size={24} />
+                Example Code
+              </h3>
+              <div className="bg-[#1e293b] text-slate-100 p-6 rounded-2xl overflow-x-auto font-mono text-sm leading-relaxed border border-slate-700 shadow-xl">
+                <pre>{project.code_snippet}</pre>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-8">
+          {project.components && project.components.length > 0 && (
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Cpu className="text-[#6CBAE6]" size={20} />
+                Bill of Materials
+              </h3>
+              <ul className="space-y-3">
+                {project.components.map((comp, i) => (
+                  <li key={i} className="flex items-center gap-2 text-slate-600 text-sm">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#6CBAE6]" />
+                    {comp}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {project.schematic_url && (
+            <div className="bg-[#6CBAE6]/10 p-6 rounded-2xl border border-[#6CBAE6]/20">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <ExternalLink className="text-[#6CBAE6]" size={20} />
+                Schematics
+              </h3>
+              <p className="text-sm text-slate-600 mb-4">View the circuit diagram for this project.</p>
+              <a 
+                href={project.schematic_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-[#6CBAE6] text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-[#5BA9D6] transition-colors"
+                title="Open Schematic"
+              >
+                Open in Designer
+                <ExternalLink size={14} />
+              </a>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

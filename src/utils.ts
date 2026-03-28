@@ -6,13 +6,17 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export interface Project {
-  id: number;
+  id: string; // Changed to string (UUID)
   title: string;
   description: string;
   author: string;
+  user_id: string;
   category: string;
   difficulty: string;
   image_url: string;
-  content: string;
+  content: string; // Markdown project body
+  components: string[]; // List of hardware components
+  code_snippet?: string; // Optional code block
+  schematic_url?: string; // Optional link to schematic
   created_at: string;
 }
