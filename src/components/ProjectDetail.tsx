@@ -1,14 +1,40 @@
 import React from 'react';
 import { Project } from '../utils';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, User, Calendar, BarChart, Cpu, Code, ExternalLink, Box } from 'lucide-react';
+import { ArrowLeft, User, Calendar, BarChart, Cpu, Code, ExternalLink, Box, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { User as AuthUser } from '@supabase/supabase-js';
 
 interface ProjectDetailProps {
   project: Project;
   onBack: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  user: AuthUser | null;
 }
 
-export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack }) => {
+export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onEdit, onDelete, user }) => {
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const isOwner = user?.id === project.user_id;
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+    
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', project.id);
+      
+      if (error) throw error;
+      onDelete();
+    } catch (err: any) {
+      alert('Error deleting project: ' + err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
       <button 
@@ -44,6 +70,26 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack })
             <Calendar size={18} />
             <span>{new Date(project.created_at).toLocaleDateString()}</span>
           </div>
+
+          {isOwner && (
+            <div className="flex-grow flex justify-end gap-3">
+              <button 
+                onClick={onEdit}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all"
+              >
+                <Edit2 size={16} />
+                Edit
+              </button>
+              <button 
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-bold text-sm transition-all disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

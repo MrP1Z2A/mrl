@@ -3,27 +3,30 @@ import { X, Plus, Trash2, Upload, Image as ImageIcon, FileUp, Loader2 } from 'lu
 import { PROJECT_CATEGORIES } from '../categories';
 import { supabase } from '../lib/supabase';
 
+import { Project } from '../utils';
+
 interface ProjectFormProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialData?: Project;
 }
 
-export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) => {
+export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, initialData }) => {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inlineFileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    author: '',
-    category: 'Robotics',
-    difficulty: 'Intermediate',
-    image_url: '',
-    content: '',
-    components: '', 
-    code_snippet: '',
-    schematic_url: ''
+    title: initialData?.title || '',
+    description: initialData?.description || '',
+    author: initialData?.author || '',
+    category: initialData?.category || 'Robotics',
+    difficulty: initialData?.difficulty || 'Intermediate',
+    image_url: initialData?.image_url || '',
+    content: initialData?.content || '',
+    components: initialData?.components?.join(', ') || '',
+    code_snippet: initialData?.code_snippet || '',
+    schematic_url: initialData?.schematic_url || ''
   });
 
   const uploadFile = async (file: File) => {
@@ -81,16 +84,26 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
         return;
       }
 
-      const { error } = await supabase
-        .from('projects')
-        .insert([{
-          ...formData,
-          user_id: user.id,
-          components: formData.components.split(',').map(s => s.trim()).filter(s => s !== ''),
-          created_at: new Date().toISOString()
-        }]);
-
-      if (error) throw error;
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            ...formData,
+            components: formData.components.split(',').map(s => s.trim()).filter(s => s !== ''),
+          })
+          .eq('id', initialData.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('projects')
+          .insert([{
+            ...formData,
+            user_id: user.id,
+            components: formData.components.split(',').map(s => s.trim()).filter(s => s !== ''),
+            created_at: new Date().toISOString()
+          }]);
+        if (error) throw error;
+      }
       onSuccess();
     } catch (err: any) {
       console.error('Error saving project:', err);
@@ -104,7 +117,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
     <div className="fixed inset-0 bg-[#0f2230]/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
-          <h2 className="text-2xl font-bold">Post New Project</h2>
+          <h2 className="text-2xl font-bold">{initialData ? 'Edit Project' : 'Post New Project'}</h2>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <X size={24} />
           </button>
@@ -280,7 +293,7 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess }) 
             disabled={loading}
             className="w-full py-4 bg-[#6CBAE6] hover:bg-[#5BA9D6] text-white font-bold rounded-xl transition-all shadow-lg shadow-[#6CBAE6]/20 disabled:opacity-50"
           >
-            {loading ? 'Publishing...' : 'Publish Project'}
+            {loading ? 'Publishing...' : initialData ? 'Update Project' : 'Publish Project'}
           </button>
         </form>
       </div>
