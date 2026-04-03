@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, User, Calendar, BarChart, Cpu, Code, ExternalLink, Box, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { User as AuthUser } from '@supabase/supabase-js';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectDetailProps {
   project: Project;
@@ -15,22 +16,35 @@ interface ProjectDetailProps {
 
 export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, onEdit, onDelete, user }) => {
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const { language, t } = useLanguage();
   const isOwner = user?.id === project.user_id;
+
+  const displayTitle = language === 'mm' && project.title_mm ? project.title_mm : project.title;
+  const displayContent = language === 'mm' && project.content_mm ? project.content_mm : project.content;
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
     
     setIsDeleting(true);
     try {
-      const { error } = await supabase
+      console.log('Deleting project:', project.id);
+      const { data, error } = await supabase
         .from('projects')
         .delete()
-        .eq('id', project.id);
+        .eq('id', project.id)
+        .select();
       
       if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        throw new Error('No project was deleted. This is usually due to database permissions (RLS) or an incorrect ID.');
+      }
+
+      console.log('Project deleted successfully');
       onDelete();
     } catch (err: any) {
-      alert('Error deleting project: ' + err.message);
+      console.error('Delete error:', err);
+      alert('Delete failed: ' + err.message);
     } finally {
       setIsDeleting(false);
     }
@@ -56,7 +70,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
           </div>
         </div>
         <h1 className="text-5xl font-black tracking-tight mb-6 leading-tight">
-          {project.title}
+          {displayTitle}
         </h1>
         
         <div className="flex items-center gap-6 text-slate-500 border-y border-slate-200 py-4">
@@ -96,7 +110,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
       <div className="rounded-2xl overflow-hidden mb-12 shadow-2xl">
         <img 
           src={project.image_url} 
-          alt={project.title}
+          alt={displayTitle}
           referrerPolicy="no-referrer"
           className="w-full aspect-video object-cover"
         />
@@ -109,7 +123,7 @@ export const ProjectDetail: React.FC<ProjectDetailProps> = ({ project, onBack, o
               <Box className="text-[#6CBAE6]" size={24} />
               Project Story
             </h3>
-            <ReactMarkdown>{project.content}</ReactMarkdown>
+            <ReactMarkdown>{displayContent}</ReactMarkdown>
           </div>
 
           {project.code_snippet && (

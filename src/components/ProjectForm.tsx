@@ -18,16 +18,20 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
   const inlineFileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
+    title_mm: initialData?.title_mm || '',
     description: initialData?.description || '',
+    description_mm: initialData?.description_mm || '',
     author: initialData?.author || '',
     category: initialData?.category || 'Robotics',
     difficulty: initialData?.difficulty || 'Intermediate',
     image_url: initialData?.image_url || '',
     content: initialData?.content || '',
+    content_mm: initialData?.content_mm || '',
     components: initialData?.components?.join(', ') || '',
     code_snippet: initialData?.code_snippet || '',
     schematic_url: initialData?.schematic_url || ''
   });
+  const [activeTab, setActiveTab] = useState<'en' | 'mm'>('en');
 
   const uploadFile = async (file: File) => {
     try {
@@ -118,6 +122,22 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
       <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center sticky top-0 bg-white z-10">
           <h2 className="text-2xl font-bold">{initialData ? 'Edit Project' : 'Post New Project'}</h2>
+          <div className="flex bg-slate-100 p-1 rounded-xl mr-4">
+            <button 
+              type="button"
+              onClick={() => setActiveTab('en')}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${activeTab === 'en' ? 'bg-white text-[#6CBAE6] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              ENGLISH
+            </button>
+            <button 
+              type="button"
+              onClick={() => setActiveTab('mm')}
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${activeTab === 'mm' ? 'bg-white text-[#6CBAE6] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              BURMESE
+            </button>
+          </div>
           <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
             <X size={24} />
           </button>
@@ -126,14 +146,25 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Project Title</label>
-              <input 
-                required
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] focus:ring-2 focus:ring-[#6CBAE6]/25 outline-none transition-all"
-                placeholder="e.g. Hexapod Walker"
-                value={formData.title}
-                onChange={e => setFormData({...formData, title: e.target.value})}
-              />
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Project Title
+              </label>
+              {activeTab === 'en' ? (
+                <input 
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] focus:ring-2 focus:ring-[#6CBAE6]/25 outline-none transition-all"
+                  placeholder="e.g. Hexapod Walker"
+                  value={formData.title}
+                  onChange={e => setFormData({...formData, title: e.target.value})}
+                />
+              ) : (
+                <input 
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] focus:ring-2 focus:ring-[#6CBAE6]/25 outline-none transition-all"
+                  placeholder="Burmese Title"
+                  value={formData.title_mm}
+                  onChange={e => setFormData({...formData, title_mm: e.target.value})}
+                />
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Author Name</label>
@@ -216,15 +247,27 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Short Description</label>
-            <textarea 
-              required
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none resize-none"
-              placeholder="Briefly explain what your project does..."
-              value={formData.description}
-              onChange={e => setFormData({...formData, description: e.target.value})}
-            />
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Short Description
+            </label>
+            {activeTab === 'en' ? (
+              <textarea 
+                required
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none resize-none"
+                placeholder="Briefly explain what your project does..."
+                value={formData.description}
+                onChange={e => setFormData({...formData, description: e.target.value})}
+              />
+            ) : (
+              <textarea 
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#6CBAE6] outline-none resize-none"
+                placeholder="Burmese Short Description"
+                value={formData.description_mm}
+                onChange={e => setFormData({...formData, description_mm: e.target.value})}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -261,7 +304,9 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Project Documentation (Markdown)</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Project Documentation (Markdown)
+              </label>
               <button
                 type="button"
                 onClick={() => inlineFileInputRef.current?.click()}
@@ -279,14 +324,24 @@ export const ProjectForm: React.FC<ProjectFormProps> = ({ onClose, onSuccess, in
                 onChange={handleInlineUpload}
               />
             </div>
-            <textarea 
-              required
-              rows={8}
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 font-mono text-sm focus:border-[#6CBAE6] outline-none"
-              placeholder="# Step 1: Assembly\nPlace the wheels..."
-              value={formData.content}
-              onChange={e => setFormData({...formData, content: e.target.value})}
-            />
+            {activeTab === 'en' ? (
+              <textarea 
+                required
+                rows={8}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 font-mono text-sm focus:border-[#6CBAE6] outline-none"
+                placeholder="# Step 1: Assembly\nPlace the wheels..."
+                value={formData.content}
+                onChange={e => setFormData({...formData, content: e.target.value})}
+              />
+            ) : (
+              <textarea 
+                rows={8}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 font-mono text-sm focus:border-[#6CBAE6] outline-none"
+                placeholder="Burmese Project Documentation (Markdown)"
+                value={formData.content_mm}
+                onChange={e => setFormData({...formData, content_mm: e.target.value})}
+              />
+            )}
           </div>
 
           <button 

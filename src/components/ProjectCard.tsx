@@ -1,6 +1,7 @@
 import React from 'react';
 import { Project } from '../utils';
 import { User, BarChart } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ProjectCardProps {
   project: Project;
@@ -8,6 +9,11 @@ interface ProjectCardProps {
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) => {
+  const { language } = useLanguage();
+  
+  const displayTitle = language === 'mm' && project.title_mm ? project.title_mm : project.title;
+  const displayDescription = language === 'mm' && project.description_mm ? project.description_mm : project.description;
+
   return (
     <div 
       onClick={onClick}
@@ -16,7 +22,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) =>
       <div className="relative aspect-video overflow-hidden">
         <img 
           src={project.image_url} 
-          alt={project.title}
+          alt={displayTitle}
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
@@ -29,10 +35,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) =>
       
       <div className="p-5 flex flex-col flex-grow">
         <h3 className="text-xl font-bold mb-2 group-hover:text-[#6CBAE6] transition-colors">
-          {project.title}
+          {displayTitle}
         </h3>
         <p className="text-slate-500 text-sm line-clamp-2 mb-4 flex-grow">
-          {project.description}
+          {displayDescription}
         </p>
         
         <div className="flex items-center justify-between pt-4 border-t border-slate-100 text-slate-400 text-xs font-medium">

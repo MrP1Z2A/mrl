@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { X, Mail, Lock, User, Loader2, Github } from 'lucide-react';
+import { X, Mail, Lock, User, Loader2, Github, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface AuthModalProps {
@@ -14,6 +14,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +29,28 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         });
         if (error) throw error;
       } else {
-        const { error } = await supabase.auth.signUp({
+        const tempPass = Math.random().toString(36).slice(-10);
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
           email,
-          password,
+          password: tempPass,
         });
-        if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        
+        if (signUpError) throw signUpError;
+        
+        if (signUpData.user) {
+          // Store the temp_pass in the profiles table
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ temp_pass: tempPass })
+            .eq('id', signUpData.user.id);
+            
+          // If the profile update fails, it means the trigger hasn't created the profile yet
+          // or there's an RLS issue. We'll log it but proceed with signup.
+          if (profileError) console.error('Error saving temp_pass:', profileError);
+          else console.log('Temporary password saved successfully:', tempPass);
+        }
+
+        alert(`Account created! Check your email for the confirmation link.\n\nYour temporary profile password is: ${tempPass}\n(This has been saved to your profile)`);
       }
       onClose();
     } catch (err: any) {
@@ -104,22 +121,31 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#5c98ff] focus:border-transparent transition-all outline-none"
-                  placeholder="••••••••"
-                />
+            {isLogin && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#5c98ff] focus:border-transparent transition-all outline-none"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {error && (
               <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">

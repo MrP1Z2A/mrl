@@ -5,6 +5,8 @@ import { ProjectCard } from '../components/ProjectCard';
 import { Project } from '../utils';
 import { motion } from 'motion/react';
 
+import { useLanguage } from '../contexts/LanguageContext';
+
 interface HomeProps {
   projects: Project[];
   loading: boolean;
@@ -22,11 +24,18 @@ export const Home: React.FC<HomeProps> = ({
   onProjectClick,
   searchQuery
 }) => {
+  const { language } = useLanguage();
   const filteredProjects = projects.filter((project) => {
     const matchesCategory = selectedCategory === 'All categories' || project.category === selectedCategory;
     const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          project.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+                          (project.title_mm?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                          project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (project.description_mm?.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    // Filter by language: if MM is selected, only show projects with Burmese content
+    const matchesLanguage = language === 'en' || (project.title_mm || project.description_mm);
+    
+    return matchesCategory && matchesSearch && matchesLanguage;
   });
 
   return (

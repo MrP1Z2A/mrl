@@ -21,9 +21,11 @@ import {
 import { Home } from './pages/Home';
 import { Projects } from './pages/Projects';
 import { FAQ } from './components/FAQ';
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 
 function Layout({ children, onNewProject, user, setIsAuthOpen, searchQuery, setSearchQuery, isSearchOpen, setIsSearchOpen }: any) {
   const navigate = useNavigate();
+  const { language, setLanguage } = useLanguage();
   return (
     <div className="min-h-screen flex flex-col">
       {/* Navigation */}
@@ -92,6 +94,21 @@ function Layout({ children, onNewProject, user, setIsAuthOpen, searchQuery, setS
               <Cloud size={20} />
               <span className="mrl-nav-item">Cloud</span>
             </button>
+            <div className="flex bg-slate-100 p-1 rounded-xl">
+              <button 
+                onClick={() => setLanguage('en')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${language === 'en' ? 'bg-white text-[#6CBAE6] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                EN
+              </button>
+              <button 
+                onClick={() => setLanguage('mm')}
+                className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${language === 'mm' ? 'bg-white text-[#6CBAE6] shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                MM
+              </button>
+            </div>
+
             <span className="hidden md:inline-block h-8 border-l border-[#5c5c5b]/40" aria-hidden="true" />
             
             {user ? (
@@ -132,9 +149,11 @@ function Layout({ children, onNewProject, user, setIsAuthOpen, searchQuery, setS
 
 export default function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <LanguageProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </LanguageProvider>
   );
 }
 
